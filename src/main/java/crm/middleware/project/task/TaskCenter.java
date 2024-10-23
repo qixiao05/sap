@@ -68,9 +68,9 @@ public class TaskCenter {
     }
 
     //数据同步（每天1：00 ：00）（开）
-    @Scheduled(initialDelay = 2000, fixedRate = 1000 * 60 * 60 * 24)
+/*    @Scheduled(initialDelay = 2000, fixedRate = 1000 * 60 * 60 * 24)
     @Async
-    @Scheduled(cron = "0 0 1 * * ?")
+    @Scheduled(cron = "0 0 1 * * ?")*/
     public void syncChargingRecord() throws Exception{
         //try {
             //String date = DateUtil8.getAfterOrPreNowTime("day",-1l);
@@ -95,6 +95,25 @@ public class TaskCenter {
             log.error("任务执行出错："+e.getMessage());
         }*/
 
+    }
+
+    //销售组织（SALESORG）为"5272"且订单类型（DOC_TYPE）为”ZOR“的订单信息
+    //销售组织（SalesOrg）为"5272"且交货类型（DelType）为”ZLF“的交货单信息。
+    //每小时执行一次
+    @Scheduled(initialDelay = 2000, fixedRate = 1000 * 60 * 60)
+    @Scheduled(cron = "0 0 * * * ?")
+    @Async
+    public void syncChargingRecordEveryHour() throws Exception{
+        String date = DateUtil8.getAfterOrPreNowTimePlus(DateUtil8.yyyyMMdd,"day",-0l);
+        log.info("订单处理开始时间："+DateUtil8.getNowTime_EN());
+        eatonApi.querySalesOrderEveryHour(date,0);
+        log.info("订单处理结束时间："+DateUtil8.getNowTime_EN());
+        log.info("销售发票处理开始时间："+DateUtil8.getNowTime_EN());
+        eatonApi.queryBilling(date,0,1);
+        log.info("销售发票处理结束时间："+DateUtil8.getNowTime_EN());
+        log.info("交货单处理开始时间："+DateUtil8.getNowTime_EN());
+        eatonApi.queryDeliveryEveryHour(date,0);
+        log.info("交货单处理结束时间："+DateUtil8.getNowTime_EN());
     }
 
     //get token

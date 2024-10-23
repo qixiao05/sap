@@ -97,6 +97,8 @@ public class DateUtil8 {
      */
     public static final DateTimeFormatter yyyyMMdd  = DateTimeFormatter.ofPattern("yyyyMMdd");
 
+    public static final DateTimeFormatter yyyyMMddHH  = DateTimeFormatter.ofPattern("yyyyMMddHH");
+
     // 本地时间显示格式：区分中文和外文显示
     public static final DateTimeFormatter shotDate = DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT);
     public static final DateTimeFormatter fullDate = DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL);
