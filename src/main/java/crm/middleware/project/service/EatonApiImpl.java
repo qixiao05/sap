@@ -1719,7 +1719,7 @@ public class EatonApiImpl {
                                 v.put("beLate__c",1);
                             }else {
                                 v.put("beLate__c",2);
-                                String content = "更新SAP订单明细.订单行号："+ v.getString("name") + "报价单编号：" + v.getString("quotation__c");
+                                String content = "订单已延期——订单行号："+ v.getString("name") + "报价单编号：" + v.getString("quotation__c");
                                 //crmAPIs.sendNotice(null,null,content, Collections.singleton(department.toString()),null,0);
                                 crmAPIs.sendNotice(null,null,content, Collections.singleton("2826535411713050"),null,0);
                             }
@@ -1731,7 +1731,7 @@ public class EatonApiImpl {
                                 v.put("beLate__c",1);
                             }else {
                                 v.put("beLate__c",2);
-                                String content = "获取到新SAP订单明细.订单行号："+ v.getString("name") + "报价单编号：" + v.getString("quotation__c");
+                                String content = "订单已延期——订单行号："+ v.getString("name") + "报价单编号：" + v.getString("quotation__c");
                                 //crmAPIs.sendNotice(null,null,content, Collections.singleton(department.toString()),null,0);
                                 crmAPIs.sendNotice(null,null,content, Collections.singleton("2826535411713050"),null,0);
                             }
