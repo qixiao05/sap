@@ -2,6 +2,7 @@ package crm.middleware.project.service;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.rkhd.platform.sdk.exception.XsyHttpException;
 import com.rkhd.platform.sdk.http.CommonData;
 import com.rkhd.platform.sdk.http.CommonHttpClient;
 import crm.middleware.project.cfg.CrmPropertiesConfig;
@@ -9,11 +10,13 @@ import crm.middleware.project.sdk.CrmAPIs;
 import crm.middleware.project.sdk.http.rest.CommonRestClient;
 import crm.middleware.project.util.DateUtil8;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.net.SocketTimeoutException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 @Slf4j
@@ -1477,7 +1480,8 @@ public class EatonApiImpl {
                         Set<String> quoteSet = new HashSet<>();
                         Set<String> snycItemSet = new HashSet<>();
                         Set<String> userSet = new HashSet<>();
-
+                        JSONObject users = crmAPIs.queryByXoqlApi("select id from department where departName = 'CSC团队'");
+                        Long department = users.getJSONObject("data").getJSONArray("records").getJSONObject(0).getLong("id");
                         for(Object o : salesOrders){
                             JSONObject order = (JSONObject) o;
                             String soldToCode__c = null!=order.get("SOLD_TO")?order.getString("SOLD_TO"):null;
@@ -1647,10 +1651,8 @@ public class EatonApiImpl {
                                             JSONObject dataJson = salesOrder__c.getJSONObject("data");
                                             orderId = dataJson.getLong("id");
                                             orderMapInCrm.put(name,orderId.toString());
-                                            JSONObject quotation = crmAPIs.queryObjectV2X(order.getLongValue("EXTER_ORDER"), "Quotation__c");
-                                            if (quotation != null){
-                                                crmAPIs.sendNotice(null,null,"发送成功", Collections.singleton(quotation.getJSONObject("cscPic__c").getString("id")),null,null);
-                                            }
+                                            //crmAPIs.sendNotice(null,null,"发送成功", Collections.singleton(department.toString()),null,1);
+                                            crmAPIs.sendNotice(null,null,"发送成功", Collections.singleton("2826535411713050"),null,0);
                                         }
                                     }else {
                                         orderCrm.put("id",((JSONObject)records.get(0)).getLong("id"));
@@ -1696,58 +1698,38 @@ public class EatonApiImpl {
                             orderDetailCrm.put("salesOrder__c",orderId);
                             String itemNo__c = null!=order.get("EXTER_ITEM")?order.getString("EXTER_ITEM"):null;
                             String quotation__c = null!=order.get("EXTER_ORDER")?order.getString("EXTER_ORDER"):null;
-                            JSONArray objects = crmAPIs.queryArrayV2("id", "OrderDetail__c", "itemNo__c ='" + itemNo__c + "' and quotation__c ='" + quotation__c + "'", null);
-                            String orderDetail__c = null!=objects&&objects.size()>0?objects.getJSONObject(0).getJSONObject("result").getJSONArray("records").getJSONObject(0).getLong("id").toString():null;
+                            JSONObject orderDetail = crmAPIs.queryByXoqlApi("select id from OrderDetail__c where itemNo__c ='" + itemNo__c +"' and quotation__c ='" + quotation__c +"'");
+                            String orderDetail__c = orderDetail.getJSONObject("data").getJSONArray("records").getJSONObject(0).getLong("id").toString();
                             orderDetailCrm.put("orderDetail__c",orderDetail__c);
                             orderDetailCrm.put("quotation__c",quotation__c);
                             if(null!=orderDetailMapInCrm.get(name+detailName)){
                                 orderDetailCrm.put("id",Long.valueOf(orderDetailMapInCrm.get(name+detailName)));
-                                if (null == updateOrderDetailMap.get(name+detailName)){
-                                    updateOrderDetailMap.put(name+detailName,orderDetailCrm);
-                                }else {
-                                    JSONObject object = updateOrderDetailMap.get(name + detailName);
-                                    Long firstDate = object.getLongValue("firstDate__c");
-                                    if(null != firstDate__c && firstDate < firstDate__c){
-                                        object.put("firstDate__c",firstDate__c);
-                                    }
-                                }
+                                updateOrderDetailMap.put(name + detailName, orderDetailCrm);
                             }else {
                                 orderDetailCrm.put("entityType",crmPropertiesConfig.orderDetailEntityType);
-                                if (null == createOrderDetailMap.get(name+detailName)){
-                                    createOrderDetailMap.put(name+detailName,orderDetailCrm);
-                                }else {
-                                    JSONObject object = createOrderDetailMap.get(name + detailName);
-                                    Long firstDate = object.getLongValue("firstDate__c");
-                                    if(null != firstDate__c && firstDate < firstDate__c){
-                                        object.put("firstDate__c",firstDate__c);
-                                    }
-                                }
+                                createOrderDetailMap.put(name + detailName, orderDetailCrm);
                             }
                         }
                         updateOrderDetailMap.forEach((k,v)-> {
                             JSONObject orderDetail = crmAPIs.queryObjectV2X(v.getLongValue("orderDetail__c"), "OrderDetail__c");
-                            if (v.getLongValue("firstDate__c") <= orderDetail.getLongValue("firstDate__c")){
+                            if (v.getLongValue("firstDate__c") <= orderDetail.getJSONObject("data").getLongValue("firstDate__c")){
                                 v.put("beLate__c",1);
                             }else {
                                 v.put("beLate__c",2);
-                                JSONObject quotation = crmAPIs.queryObjectV2X(v.getLongValue("quotation__c"), "Quotation__c");
-                                if (quotation != null){
-                                    crmAPIs.sendNotice(null,null,"发送成功", Collections.singleton(quotation.getJSONObject("cscPic__c").getString("id")),null,null);
-                                }
+                                //crmAPIs.sendNotice(null,null,"发送成功", Collections.singleton(department.toString()),null,0);
+                                crmAPIs.sendNotice(null,null,"发送成功", Collections.singleton("2826535411713050"),null,0);
                             }
                             updateOrderDetail.add(v);
                         });
 
                         createOrderDetailMap.forEach((k,v)-> {
                             JSONObject orderDetail = crmAPIs.queryObjectV2X(v.getLong("orderDetail__c"), "OrderDetail__c");
-                            if (v.getLongValue("firstDate__c") <= orderDetail.getLongValue("firstDate__c")){
+                            if (v.getLongValue("firstDate__c") <= orderDetail.getJSONObject("data").getLongValue("firstDate__c")){
                                 v.put("beLate__c",1);
                             }else {
                                 v.put("beLate__c",2);
-                                JSONObject quotation = crmAPIs.queryObjectV2X(v.getLongValue("quotation__c"), "Quotation__c");
-                                if (quotation != null){
-                                    crmAPIs.sendNotice(null,null,"发送成功", Collections.singleton(quotation.getJSONObject("cscPic__c").getString("id")),null,null);
-                                }
+                                //crmAPIs.sendNotice(null,null,"发送成功", Collections.singleton(department.toString()),null,0);
+                                crmAPIs.sendNotice(null,null,"发送成功", Collections.singleton("2826535411713050"),null,0);
                             }
                             createOrderDetail.add(v);
                         });

@@ -104,7 +104,8 @@ public class TaskCenter {
     @Scheduled(cron = "0 0 * * * ?")
     @Async
     public void syncChargingRecordEveryHour() throws Exception{
-        String date = DateUtil8.getAfterOrPreNowTimePlus(DateUtil8.yyyyMMdd,"day",-0l);
+        //String date = DateUtil8.getAfterOrPreNowTimePlus(DateUtil8.yyyyMMdd,"day",-0l);
+        String date = "20241030";
         log.info("订单处理开始时间："+DateUtil8.getNowTime_EN());
         eatonApi.querySalesOrderEveryHour(date,0);
         log.info("订单处理结束时间："+DateUtil8.getNowTime_EN());
