@@ -1480,6 +1480,7 @@ public class EatonApiImpl {
                         Set<String> quoteSet = new HashSet<>();
                         Set<String> snycItemSet = new HashSet<>();
                         Set<String> userSet = new HashSet<>();
+                        Map<Long,Long> orderDetails = new HashMap<>();
                         JSONObject users = crmAPIs.queryByXoqlApi("select id from department where departName = 'CSC团队'");
                         Long department = users.getJSONObject("data").getJSONArray("records").getJSONObject(0).getLong("id");
                         for(Object o : salesOrders){
@@ -1651,8 +1652,9 @@ public class EatonApiImpl {
                                             JSONObject dataJson = salesOrder__c.getJSONObject("data");
                                             orderId = dataJson.getLong("id");
                                             orderMapInCrm.put(name,orderId.toString());
-                                            //crmAPIs.sendNotice(null,null,"发送成功", Collections.singleton(department.toString()),null,1);
-                                            crmAPIs.sendNotice(null,null,"发送成功", Collections.singleton("2826535411713050"),null,0);
+                                            String content = "从SAP获取到新的订单信息.订单编号："+ name;
+                                            //crmAPIs.sendNotice(null,null,content, Collections.singleton(department.toString()),null,1);
+                                            crmAPIs.sendNotice(null,null,content, Collections.singleton("2826535411713050"),null,0);
                                         }
                                     }else {
                                         orderCrm.put("id",((JSONObject)records.get(0)).getLong("id"));
@@ -1698,9 +1700,11 @@ public class EatonApiImpl {
                             orderDetailCrm.put("salesOrder__c",orderId);
                             String itemNo__c = null!=order.get("EXTER_ITEM")?order.getString("EXTER_ITEM"):null;
                             String quotation__c = null!=order.get("EXTER_ORDER")?order.getString("EXTER_ORDER"):null;
-                            JSONObject orderDetail = crmAPIs.queryByXoqlApi("select id from OrderDetail__c where itemNo__c ='" + itemNo__c +"' and quotation__c ='" + quotation__c +"'");
-                            String orderDetail__c = orderDetail.getJSONObject("data").getJSONArray("records").getJSONObject(0).getLong("id").toString();
-                            orderDetailCrm.put("orderDetail__c",orderDetail__c);
+                            JSONObject orderDetail = crmAPIs.queryByXoqlApi("select id,firstDate__c from OrderDetail__c where itemNo__c ='" + itemNo__c +"' and quotation__c ='" + quotation__c +"'");
+                            Long orderDetailID = orderDetail.getJSONObject("data").getJSONArray("records").getJSONObject(0).getLong("id");
+                            Long ODfirstDate = orderDetail.getJSONObject("data").getJSONArray("records").getJSONObject(0).getLong("firstDate__c");
+                            orderDetails.put(orderDetailID,ODfirstDate);
+                            orderDetailCrm.put("orderDetail__c",orderDetailID);
                             orderDetailCrm.put("quotation__c",quotation__c);
                             if(null!=orderDetailMapInCrm.get(name+detailName)){
                                 orderDetailCrm.put("id",Long.valueOf(orderDetailMapInCrm.get(name+detailName)));
@@ -1711,25 +1715,25 @@ public class EatonApiImpl {
                             }
                         }
                         updateOrderDetailMap.forEach((k,v)-> {
-                            JSONObject orderDetail = crmAPIs.queryObjectV2X(v.getLongValue("orderDetail__c"), "OrderDetail__c");
-                            if (v.getLongValue("firstDate__c") <= orderDetail.getJSONObject("data").getLongValue("firstDate__c")){
+                            if (v.getLongValue("firstDate__c") <= orderDetails.get(v.getLongValue("orderDetail__c"))){
                                 v.put("beLate__c",1);
                             }else {
                                 v.put("beLate__c",2);
-                                //crmAPIs.sendNotice(null,null,"发送成功", Collections.singleton(department.toString()),null,0);
-                                crmAPIs.sendNotice(null,null,"发送成功", Collections.singleton("2826535411713050"),null,0);
+                                String content = "更新SAP订单明细.订单行号："+ v.getString("name") + "报价单编号：" + v.getString("quotation__c");
+                                //crmAPIs.sendNotice(null,null,content, Collections.singleton(department.toString()),null,0);
+                                crmAPIs.sendNotice(null,null,content, Collections.singleton("2826535411713050"),null,0);
                             }
                             updateOrderDetail.add(v);
                         });
 
                         createOrderDetailMap.forEach((k,v)-> {
-                            JSONObject orderDetail = crmAPIs.queryObjectV2X(v.getLong("orderDetail__c"), "OrderDetail__c");
-                            if (v.getLongValue("firstDate__c") <= orderDetail.getJSONObject("data").getLongValue("firstDate__c")){
+                            if (v.getLongValue("firstDate__c") <= orderDetails.get(v.getLongValue("orderDetail__c"))){
                                 v.put("beLate__c",1);
                             }else {
                                 v.put("beLate__c",2);
-                                //crmAPIs.sendNotice(null,null,"发送成功", Collections.singleton(department.toString()),null,0);
-                                crmAPIs.sendNotice(null,null,"发送成功", Collections.singleton("2826535411713050"),null,0);
+                                String content = "获取到新SAP订单明细.订单行号："+ v.getString("name") + "报价单编号：" + v.getString("quotation__c");
+                                //crmAPIs.sendNotice(null,null,content, Collections.singleton(department.toString()),null,0);
+                                crmAPIs.sendNotice(null,null,content, Collections.singleton("2826535411713050"),null,0);
                             }
                             createOrderDetail.add(v);
                         });
