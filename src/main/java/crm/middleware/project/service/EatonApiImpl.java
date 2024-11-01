@@ -1652,7 +1652,7 @@ public class EatonApiImpl {
                                             JSONObject dataJson = salesOrder__c.getJSONObject("data");
                                             orderId = dataJson.getLong("id");
                                             orderMapInCrm.put(name,orderId.toString());
-                                            String content = "从SAP获取到新的订单信息.订单编号："+ name;
+                                            String content = "从SAP获取到新的订单信息.订单编号："+ name + " 报价单编号：" + order.getString("EXTER_ORDER");
                                             //crmAPIs.sendNotice(null,null,content, Collections.singleton(department.toString()),null,1);
                                             crmAPIs.sendNotice(null,null,content, Collections.singleton("2826535411713050"),null,0);
                                         }
@@ -1708,10 +1708,10 @@ public class EatonApiImpl {
                             orderDetailCrm.put("quotation__c",quotation__c);
                             if(null!=orderDetailMapInCrm.get(name+detailName)){
                                 orderDetailCrm.put("id",Long.valueOf(orderDetailMapInCrm.get(name+detailName)));
-                                updateOrderDetailMap.put(name + detailName, orderDetailCrm);
+                                updateOrderDetailMap.putIfAbsent(name + detailName, orderDetailCrm);
                             }else {
                                 orderDetailCrm.put("entityType",crmPropertiesConfig.orderDetailEntityType);
-                                createOrderDetailMap.put(name + detailName, orderDetailCrm);
+                                createOrderDetailMap.putIfAbsent(name + detailName, orderDetailCrm);
                             }
                         }
                         updateOrderDetailMap.forEach((k,v)-> {
@@ -1719,7 +1719,7 @@ public class EatonApiImpl {
                                 v.put("beLate__c",1);
                             }else {
                                 v.put("beLate__c",2);
-                                String content = "订单已延期——订单行号："+ v.getString("name") + "报价单编号：" + v.getString("quotation__c");
+                                String content = "订单已延期——订单编号:"+k.substring(0,k.indexOf(v.getString("name")))+" 订单行号："+ v.getString("name") + " 报价单编号：" + v.getString("quotation__c");
                                 //crmAPIs.sendNotice(null,null,content, Collections.singleton(department.toString()),null,0);
                                 crmAPIs.sendNotice(null,null,content, Collections.singleton("2826535411713050"),null,0);
                             }
@@ -1731,7 +1731,7 @@ public class EatonApiImpl {
                                 v.put("beLate__c",1);
                             }else {
                                 v.put("beLate__c",2);
-                                String content = "订单已延期——订单行号："+ v.getString("name") + "报价单编号：" + v.getString("quotation__c");
+                                String content = "订单已延期——订单编号:"+k.substring(0,k.indexOf(v.getString("name")))+" 订单行号："+ v.getString("name") + " 报价单编号：" + v.getString("quotation__c");
                                 //crmAPIs.sendNotice(null,null,content, Collections.singleton(department.toString()),null,0);
                                 crmAPIs.sendNotice(null,null,content, Collections.singleton("2826535411713050"),null,0);
                             }
@@ -1954,10 +1954,10 @@ public class EatonApiImpl {
                             deliveryDetailCrm.put("deliveryQty__c",deliveryQty__c);
                             String prodHierarchy__c = null!=delivery.get("ProductHierarchy")?delivery.getString("ProductHierarchy"):null;
                             deliveryDetailCrm.put("prodHierarchy__c",prodHierarchy__c);
-                            JSONObject salesOrderDetail = crmAPIs.queryObjectV2X(null!=orderItemCode__c? Long.parseLong(orderItemCode__c) :0, "salesOrderDetail__c");
-                            deliveryDetailCrm.put("quotation__c",salesOrderDetail.get("quotation__c"));
+                            JSONObject salesOrderDetail = crmAPIs.queryByXoqlApi("select quotation__c from salesOrderDetail__c where uniqueKey__c ='" + orderCode__c + orderItemCode__c +"'");
+                            String quotation__c = salesOrderDetail.getJSONObject("data").getJSONArray("records").getJSONObject(0).getString("quotation__c");
+                            deliveryDetailCrm.put("quotation__c",quotation__c);
                             deliveryDetailCrm.put("delivery__c",deliveryId);
-
                             if(null!=deliveryDetailMapInCrm.get(name+detailName)){
                                 deliveryDetailCrm.put("id",Long.valueOf(deliveryDetailMapInCrm.get(name+detailName)));
                                 updateDeliveryDetail.add(deliveryDetailCrm);

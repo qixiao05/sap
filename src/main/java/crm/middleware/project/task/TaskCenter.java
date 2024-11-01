@@ -8,6 +8,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 
 
 /**
@@ -104,8 +105,7 @@ public class TaskCenter {
     @Scheduled(cron = "0 0 * * * ?")
     @Async
     public void syncChargingRecordEveryHour() throws Exception{
-        //String date = DateUtil8.getAfterOrPreNowTimePlus(DateUtil8.yyyyMMdd,"day",-0l);
-        String date = "20241030";
+        String date = DateUtil8.getAfterOrPreNowTimePlus(DateUtil8.yyyyMMdd,"hour",-12l);
         log.info("订单处理开始时间："+DateUtil8.getNowTime_EN());
         eatonApi.querySalesOrderEveryHour(date,0);
         log.info("订单处理结束时间："+DateUtil8.getNowTime_EN());
